@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tracecompass.analysis.os.linux.core.model.OsStrings;
 import org.eclipse.tracecompass.incubator.analysis.core.model.IHostModel;
@@ -42,12 +41,12 @@ import org.eclipse.tracecompass.statesystem.core.interval.ITmfStateInterval;
 import org.eclipse.tracecompass.tmf.core.dataprovider.DataProviderParameterUtils;
 import org.eclipse.tracecompass.tmf.core.dataprovider.DataType;
 import org.eclipse.tracecompass.tmf.core.model.CommonStatusMessage;
+import org.eclipse.tracecompass.tmf.core.model.ICoreElementResolver;
 import org.eclipse.tracecompass.tmf.core.model.IOutputStyleProvider;
 import org.eclipse.tracecompass.tmf.core.model.OutputElementStyle;
 import org.eclipse.tracecompass.tmf.core.model.OutputStyleModel;
 import org.eclipse.tracecompass.tmf.core.model.StyleProperties;
 import org.eclipse.tracecompass.tmf.core.model.YModel;
-import org.eclipse.tracecompass.tmf.core.model.timegraph.IElementResolver;
 import org.eclipse.tracecompass.tmf.core.model.tree.AbstractTreeDataProvider;
 import org.eclipse.tracecompass.tmf.core.model.tree.ITmfTreeDataModel;
 import org.eclipse.tracecompass.tmf.core.model.tree.ITmfTreeDataProvider;
@@ -83,15 +82,15 @@ public class IoPerProcessDataProvider extends AbstractTreeDataProvider<IoAnalysi
      * Provider unique ID.
      */
     public static final String ID = "org.eclipse.tracecompass.incubator.kernel.core.io.per.process"; //$NON-NLS-1$
-    private static final String READ_TITLE = "Read";
-    private static final String WRITE_TITLE = "Write";
+    private static final String READ_TITLE = "Read"; //$NON-NLS-1$
+    private static final String WRITE_TITLE = "Write"; //$NON-NLS-1$
     private static final double SECONDS_PER_NANOSECOND = 1E-9;
 
     private static final String BASE_STYLE = "base"; //$NON-NLS-1$
     private static final Map<String, OutputElementStyle> STATE_MAP;
     private static final List<Pair<String, String>> COLOR_LIST = IODataPalette.getColors();
     private static final String BINARY_SPEED_UNIT = "B/s"; //$NON-NLS-1$
-    private static final TmfXYAxisDescription Y_AXIS_DESCRIPTION = new TmfXYAxisDescription(Objects.requireNonNull("File throughput"), BINARY_SPEED_UNIT, DataType.BINARY_NUMBER);
+    private static final TmfXYAxisDescription Y_AXIS_DESCRIPTION = new TmfXYAxisDescription(Objects.requireNonNull("File throughput"), BINARY_SPEED_UNIT, DataType.BINARY_NUMBER); //$NON-NLS-1$
     private static final List<String> SUPPORTED_STYLES = ImmutableList.of(
             StyleProperties.SeriesStyle.SOLID,
             StyleProperties.SeriesStyle.DASH,
@@ -101,7 +100,7 @@ public class IoPerProcessDataProvider extends AbstractTreeDataProvider<IoAnalysi
 
     static {
         // Create the base style
-        ImmutableMap.Builder<@NonNull String, @NonNull OutputElementStyle> builder = new ImmutableMap.Builder<>();
+        ImmutableMap.Builder<String, OutputElementStyle> builder = new ImmutableMap.Builder<>();
         builder.put(BASE_STYLE, new OutputElementStyle(null, ImmutableMap.of(StyleProperties.SERIES_TYPE, StyleProperties.SeriesType.LINE, StyleProperties.WIDTH, 1.0f, StyleProperties.OPACITY, 1.0f)));
         STATE_MAP = builder.build();
     }
@@ -111,7 +110,7 @@ public class IoPerProcessDataProvider extends AbstractTreeDataProvider<IoAnalysi
     private final Map<Integer, String> fQuarkToString = new HashMap<>();
 
     // Data model class that has metadata
-    private static final class IoTreeDataModel extends TmfTreeDataModel implements IElementResolver {
+    private static final class IoTreeDataModel extends TmfTreeDataModel implements ICoreElementResolver {
 
         private Multimap<String, Object> fMetadata;
 
@@ -429,7 +428,7 @@ public class IoPerProcessDataProvider extends AbstractTreeDataProvider<IoAnalysi
         List<Long> times = getTimes(ss, DataProviderParameterUtils.extractTimeRequested(fetchParameters));
         List<Integer> quarksToQuery = new ArrayList<>();
         long currentEnd = ss.getCurrentEndTime();
-        boolean complete = ss.waitUntilBuilt(0) || (times.size() != 0 && times.get(times.size() - 1) <= currentEnd);
+        boolean complete = ss.waitUntilBuilt(0) || (!times.isEmpty() && times.get(times.size() - 1) <= currentEnd);
 
         for (Entry<Long, Integer> entry : selectedEntries.entrySet()) {
             // Add only quarks that can be displayed, ie, those in the
@@ -490,7 +489,7 @@ public class IoPerProcessDataProvider extends AbstractTreeDataProvider<IoAnalysi
         if (list == null) {
             return Collections.emptyList();
         }
-        List<@NonNull Long> times = new ArrayList<>();
+        List<Long> times = new ArrayList<>();
         for (long t : list) {
             if (key.getStartTime() <= t && t <= key.getCurrentEndTime()) {
                 times.add(t);

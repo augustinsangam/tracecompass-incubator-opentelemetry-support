@@ -31,7 +31,7 @@ import org.eclipse.tracecompass.incubator.internal.tmf.ui.multiview.ui.view.time
 import org.eclipse.tracecompass.incubator.internal.tmf.ui.multiview.ui.view.xychart.ChartMultiViewer;
 import org.eclipse.tracecompass.internal.provisional.tmf.ui.widgets.timegraph.BaseDataProviderTimeGraphPresentationProvider;
 import org.eclipse.tracecompass.tmf.core.dataprovider.DataProviderParameterUtils;
-import org.eclipse.tracecompass.tmf.core.model.timegraph.IElementResolver;
+import org.eclipse.tracecompass.tmf.core.model.ICoreElementResolver;
 import org.eclipse.tracecompass.tmf.core.signal.TmfDataModelSelectedSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalHandler;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalManager;
@@ -58,7 +58,6 @@ public class IoByProcessView extends AbstractMultiView {
      * The view's ID.
      */
     public static final String VIEW_ID = "org.eclipse.tracecompass.kernel.ui.view.iobyprocess"; //$NON-NLS-1$
-
 
     private @Nullable Integer fSelectedTid = null;
     private Set<Integer> fCheckedTids = new HashSet<>();
@@ -116,7 +115,7 @@ public class IoByProcessView extends AbstractMultiView {
         }
 
         @Override
-        protected @NonNull Map<@NonNull String, @NonNull Object> getFetchTreeParameters() {
+        protected @NonNull Map<String, Object> getFetchTreeParameters() {
             Integer tid = fSelectedTid;
             Set<Integer> tids = new HashSet<>(fCheckedTids);
             if (tid != null) {
@@ -150,8 +149,8 @@ public class IoByProcessView extends AbstractMultiView {
                 Set<Object> tids = new HashSet<>();
                 entries.stream().filter(e -> e instanceof TmfGenericTreeEntry<?>)
                         .map(e -> ((TmfGenericTreeEntry<?>) e).getModel())
-                        .filter(m -> m instanceof IElementResolver)
-                        .map(m -> ((IElementResolver) m).getMetadata().get(OsStrings.tid()))
+                        .filter(m -> m instanceof ICoreElementResolver)
+                        .map(m -> ((ICoreElementResolver) m).getMetadata().get(OsStrings.tid()))
                         .forEach(t -> tids.addAll(t));
                 fCheckedTids.clear();
                 for (Object tid : tids) {
@@ -172,7 +171,7 @@ public class IoByProcessView extends AbstractMultiView {
 
         tgViewer.init();
         addLane(tgViewer);
-        fTgViewer  = tgViewer;
+        fTgViewer = tgViewer;
     }
 
 }

@@ -90,8 +90,8 @@ import org.eclipse.tracecompass.internal.provisional.tmf.core.model.filter.parse
 import org.eclipse.tracecompass.internal.provisional.tmf.core.model.filters.TraceCompassFilter;
 import org.eclipse.tracecompass.internal.tmf.ui.Activator;
 import org.eclipse.tracecompass.internal.tmf.ui.util.TimeGraphStyleUtil;
-import org.eclipse.tracecompass.tmf.core.model.timegraph.IElementResolver;
-import org.eclipse.tracecompass.tmf.core.model.timegraph.IFilterProperty;
+import org.eclipse.tracecompass.tmf.core.model.CoreFilterProperty;
+import org.eclipse.tracecompass.tmf.core.model.ICoreElementResolver;
 import org.eclipse.tracecompass.tmf.core.resources.ITmfMarker;
 import org.eclipse.tracecompass.tmf.core.signal.TmfDataModelSelectedSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfMarkerEventSourceUpdatedSignal;
@@ -341,8 +341,8 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
     /** Listener that handles a click on an entry in the FusedVM View */
     private final ITimeGraphSelectionListener fMetadataSelectionListener = event -> {
         ITimeGraphEntry entry = event.getSelection();
-        if (entry instanceof IElementResolver) {
-            Multimap<@NonNull String, @NonNull Object> metadata = ((IElementResolver) entry).getMetadata();
+        if (entry instanceof ICoreElementResolver) {
+            Multimap<@NonNull String, @NonNull Object> metadata = ((ICoreElementResolver) entry).getMetadata();
             if (!metadata.isEmpty()) {
                 TmfSignalManager.dispatchSignal(new TmfDataModelSelectedSignal(AbstractTimeGraphMultiViewer.this, metadata));
             }
@@ -375,14 +375,14 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
         timeGraphViewer.setMarkerAxisControlVisible(false);
         timeGraphViewer.setHorizontalScrollBarVisible(false);
         fTimeGraphViewer = timeGraphViewer;
-        setFilterColumns(new String[] { "Name" });
+        setFilterColumns(new String[] { "Name" }); //$NON-NLS-1$
         setFilterLabelProvider(new TreeLabelProvider() {
             @Override
             public String getColumnText(Object element, int columnIndex) {
                 if (columnIndex == 0) {
                     return this.getText(element);
                 }
-                return "";
+                return ""; //$NON-NLS-1$
             }
         });
     }
@@ -1904,7 +1904,7 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
                     if (filterDialog.hasActiveSavedFilters()) {
                         computedLinks = Collections.emptyList();
                     } else {
-                        computedLinks.forEach(link -> link.setProperty(IFilterProperty.DIMMED, filterDialog.isFilterActive()));
+                        computedLinks.forEach(link -> link.setProperty(CoreFilterProperty.DIMMED, filterDialog.isFilterActive()));
                     }
                 }
             }
@@ -2043,7 +2043,7 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
 
                     boolean status = value.test(toTest);
                     Integer property = mapEntry.getKey();
-                    if (property == IFilterProperty.DIMMED || property == IFilterProperty.EXCLUDE) {
+                    if (property == CoreFilterProperty.DIMMED || property == CoreFilterProperty.EXCLUDE) {
                         te.setProperty(property, !status);
                     } else {
                         te.setProperty(property, status);
@@ -2070,7 +2070,7 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
             eventList.forEach(te -> {
                 // Keep only the events that do not have the 'exclude' property
                 // activated
-                if (!te.isPropertyActive(IFilterProperty.EXCLUDE)) {
+                if (!te.isPropertyActive(CoreFilterProperty.EXCLUDE)) {
                     filtered.add(te);
                 }
             });
@@ -2082,8 +2082,8 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
             for (ITimeEvent event : filtered) {
                 if (prevTime < event.getTime()) {
                     NullTimeEvent nullTimeEvent = new NullTimeEvent(entry, prevTime, event.getTime() - prevTime);
-                    nullTimeEvent.setProperty(IFilterProperty.DIMMED, true);
-                    nullTimeEvent.setProperty(IFilterProperty.EXCLUDE, true);
+                    nullTimeEvent.setProperty(CoreFilterProperty.DIMMED, true);
+                    nullTimeEvent.setProperty(CoreFilterProperty.EXCLUDE, true);
                     eventList.add(nullTimeEvent);
                 }
                 eventList.add(event);
@@ -2091,8 +2091,8 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
             }
             if (prevTime < endTime) {
                 NullTimeEvent nullTimeEvent = new NullTimeEvent(entry, prevTime, endTime - prevTime);
-                nullTimeEvent.setProperty(IFilterProperty.DIMMED, true);
-                nullTimeEvent.setProperty(IFilterProperty.EXCLUDE, true);
+                nullTimeEvent.setProperty(CoreFilterProperty.DIMMED, true);
+                nullTimeEvent.setProperty(CoreFilterProperty.EXCLUDE, true);
                 eventList.add(nullTimeEvent);
             }
         }
@@ -2106,11 +2106,11 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
     @NonNullByDefault
     protected Map<Integer, Predicate<Multimap<String, Object>>> generateRegexPredicate() {
         Multimap<Integer, String> regexes = getRegexes();
-        Map<@NonNull Integer, @NonNull Predicate<@NonNull Multimap<@NonNull String, @NonNull Object>>> predicates = new HashMap<>();
+        Map<Integer, Predicate<Multimap<String, Object>>> predicates = new HashMap<>();
         for (Entry<Integer, Collection<String>> entry : regexes.asMap().entrySet()) {
             String regex = IFilterStrings.mergeFilters(entry.getValue());
             FilterCu cu = FilterCu.compile(regex);
-            Predicate<@NonNull Multimap<@NonNull String, @NonNull Object>> predicate = cu != null ? cu.generate() : null;
+            Predicate<Multimap<String, Object>> predicate = cu != null ? cu.generate() : null;
             if (predicate != null) {
                 predicates.put(entry.getKey(), predicate);
             }
@@ -2156,7 +2156,7 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
             if (columnIndex == 0) {
                 return entry.getName();
             }
-            return new String();
+            return ""; //$NON-NLS-1$
         }
 
         @Override
@@ -2390,13 +2390,13 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
         @NonNull
         String dialogRegex = fTimeEventFilterDialog != null ? fTimeEventFilterDialog.getTextBoxRegex() : ""; //$NON-NLS-1$
         if (!dialogRegex.isEmpty()) {
-            regexes.put(IFilterProperty.DIMMED, dialogRegex);
+            regexes.put(CoreFilterProperty.DIMMED, dialogRegex);
         }
 
         Set<@NonNull String> savedFilters = fTimeEventFilterDialog != null ? fTimeEventFilterDialog.getSavedFilters() : Collections.emptySet();
         for (String savedFilter : savedFilters) {
-            regexes.put(IFilterProperty.EXCLUDE, savedFilter);
-            regexes.put(IFilterProperty.DIMMED, savedFilter);
+            regexes.put(CoreFilterProperty.EXCLUDE, savedFilter);
+            regexes.put(CoreFilterProperty.DIMMED, savedFilter);
         }
 
         ITmfTrace trace = fTrace;
@@ -2407,7 +2407,7 @@ public abstract class AbstractTimeGraphMultiViewer extends TmfViewer implements 
         if (globalFilter == null) {
             return regexes;
         }
-        regexes.putAll(IFilterProperty.DIMMED, globalFilter.getRegexes());
+        regexes.putAll(CoreFilterProperty.DIMMED, globalFilter.getRegexes());
 
         return regexes;
     }
